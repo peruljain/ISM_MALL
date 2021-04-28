@@ -20,11 +20,11 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import learncodeonline.in.mymall.DBqueries;
-import learncodeonline.in.mymall.MainActivity;
 import learncodeonline.in.mymall.R;
 import learncodeonline.in.mymall.authentication.RegisterActivity;
 import learncodeonline.in.mymall.order.MyOrderItemModel;
@@ -40,6 +40,7 @@ public class MyAccountFragment extends Fragment {
         // Required empty public constructor
     }
 
+    private FloatingActionButton settings_btn;
     private Button viewAllAddressBtn, signOutBtn;
     public static final int MANAGE_ADDRESS = 1;
     private CircleImageView profileView, currentOrderImage;
@@ -71,7 +72,7 @@ public class MyAccountFragment extends Fragment {
         loadingDialog.show();
         /////// loading dialog
 
-        profileView = view.findViewById(R.id.profile_image);
+        profileView = view.findViewById(R.id.profile_images);
         name = view.findViewById(R.id.user_name);
         email = view.findViewById(R.id.user_email);
         layoutContainer = view.findViewById(R.id.layout_container);
@@ -90,6 +91,7 @@ public class MyAccountFragment extends Fragment {
         addressName = view.findViewById(R.id.address_full_name);
         pinCode = view.findViewById(R.id.address_pincode);
         signOutBtn = view.findViewById(R.id.sign_out_btn);
+        settings_btn = view.findViewById(R.id.setting_btn);
 
 
         name.setText(DBqueries.fullname);
@@ -177,32 +179,7 @@ public class MyAccountFragment extends Fragment {
                               pinCode.setText("-");
                           }
                           else {
-                              String name = DBqueries.adressesModelList.get(DBqueries.selectedAddress).getName();
-                              String mobileNo = DBqueries.adressesModelList.get(DBqueries.selectedAddress).getMobileNo();
-                              if(DBqueries.adressesModelList.get(DBqueries.selectedAddress).getAlternateMobileNo().equals("")) {
-                                  addressName.setText(name + "-" + mobileNo);
-                              }
-                              else {
-                                  addressName.setText(name + "-" + mobileNo + " or " + DBqueries.adressesModelList.get(DBqueries.selectedAddress).getAlternateMobileNo());
-                              }
-
-                              String  flatNo = DBqueries.adressesModelList.get(DBqueries.selectedAddress).getFlatNo();
-                              String  locality = DBqueries.adressesModelList.get(DBqueries.selectedAddress).getLocality();
-                              String  landmark = DBqueries.adressesModelList.get(DBqueries.selectedAddress).getLandmark();
-                              String  city = DBqueries.adressesModelList.get(DBqueries.selectedAddress).getCity();
-                              String  state = DBqueries.adressesModelList.get(DBqueries.selectedAddress).getState();
-
-                              if(landmark.equals("")) {
-                                  address.setText(flatNo + " " + locality+ " " +city+ " " +state);
-                              }
-                              else {
-                                  address.setText(flatNo + " " + locality+ " " + landmark+ " " +city+ " " +state);
-                              }
-
-
-                              pinCode.setText(DBqueries.adressesModelList.get(DBqueries.selectedAddress).getPincode());
-
-
+                              setAddress();
                           }
                       }
                   });
@@ -235,7 +212,71 @@ public class MyAccountFragment extends Fragment {
             }
         });
 
+        settings_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent updateUserInfo = new Intent(getContext(), UpdateUserInfoActivity.class);
+                updateUserInfo.putExtra("Name", name.getText());
+                updateUserInfo.putExtra("Email", email.getText());
+                updateUserInfo.putExtra("Photo", DBqueries.profile);
+                startActivity(updateUserInfo);
+            }
+        });
+
         return view;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        name.setText(DBqueries.fullname);
+        email.setText(DBqueries.email);
+
+        if(!DBqueries.profile.equals("")) {
+            Glide.with(getContext()).load(DBqueries.profile).apply(new RequestOptions().placeholder(R.mipmap.account)).into(profileView);
+        } else {
+            profileView.setImageResource(R.mipmap.account);
+        }
+
+        if(!loadingDialog.isShowing()) {
+            if(DBqueries.adressesModelList.size()==0) {
+                addressName.setText("No Address");
+                address.setText("-");
+                pinCode.setText("-");
+            }
+            else {
+                setAddress();
+            }
+        }
+    }
+
+    private void setAddress() {
+        String name = DBqueries.adressesModelList.get(DBqueries.selectedAddress).getName();
+        String mobileNo = DBqueries.adressesModelList.get(DBqueries.selectedAddress).getMobileNo();
+        if(DBqueries.adressesModelList.get(DBqueries.selectedAddress).getAlternateMobileNo().equals("")) {
+            addressName.setText(name + "-" + mobileNo);
+        }
+        else {
+            addressName.setText(name + "-" + mobileNo + " or " + DBqueries.adressesModelList.get(DBqueries.selectedAddress).getAlternateMobileNo());
+        }
+
+        String  flatNo = DBqueries.adressesModelList.get(DBqueries.selectedAddress).getFlatNo();
+        String  locality = DBqueries.adressesModelList.get(DBqueries.selectedAddress).getLocality();
+        String  landmark = DBqueries.adressesModelList.get(DBqueries.selectedAddress).getLandmark();
+        String  city = DBqueries.adressesModelList.get(DBqueries.selectedAddress).getCity();
+        String  state = DBqueries.adressesModelList.get(DBqueries.selectedAddress).getState();
+
+        if(landmark.equals("")) {
+            address.setText(flatNo + " " + locality+ " " +city+ " " +state);
+        }
+        else {
+            address.setText(flatNo + " " + locality+ " " + landmark+ " " +city+ " " +state);
+        }
+
+
+        pinCode.setText(DBqueries.adressesModelList.get(DBqueries.selectedAddress).getPincode());
+
     }
 
 }

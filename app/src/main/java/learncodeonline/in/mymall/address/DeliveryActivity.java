@@ -437,7 +437,6 @@ public class DeliveryActivity extends AppCompatActivity {
         RequestQueue requestQueue = Volley.newRequestQueue(DeliveryActivity.this);
         requestQueue.add(stringRequest);
         ////////sent confirmation SMS
-        Log.i("KAJAL", String.valueOf(cartItemModelList.size()));
         if(fromCart){
             loadingDialog.show();
             Map<String,Object> updateCartList = new HashMap<>();
@@ -492,7 +491,6 @@ public class DeliveryActivity extends AppCompatActivity {
     private void placeOrderDetails(){
 
         String userID = FirebaseAuth.getInstance().getUid();
-        // Log.i("kajal",userID);
         loadingDialog.show();
         for(CartItemModel cartItemModel : cartItemModelList) {
             if(cartItemModel.getType() == cartItemModel.CART_ITEM) {

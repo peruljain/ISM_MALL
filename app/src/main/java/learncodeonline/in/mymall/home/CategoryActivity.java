@@ -6,6 +6,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import learncodeonline.in.mymall.R;
+import learncodeonline.in.mymall.SearchActivity;
 import learncodeonline.in.mymall.wishlist.WishlistModel;
 
 import static learncodeonline.in.mymall.DBqueries.lists;
@@ -99,6 +101,8 @@ public class CategoryActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         if(id == R.id.main_search_icon){
+            Intent searchIntent = new Intent(this, SearchActivity.class);
+            startActivity(searchIntent);
             return true;
         }else if(id == android.R.id.home){
             finish();

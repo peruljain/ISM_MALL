@@ -44,6 +44,7 @@ import java.util.Map;
 
 import learncodeonline.in.mymall.DBqueries;
 import learncodeonline.in.mymall.MainActivity;
+import learncodeonline.in.mymall.SearchActivity;
 import learncodeonline.in.mymall.address.DeliveryActivity;
 import learncodeonline.in.mymall.R;
 import learncodeonline.in.mymall.authentication.RegisterActivity;
@@ -62,6 +63,7 @@ public class ProductDetailActivity extends AppCompatActivity {
     public static boolean running_rating_query = false;
     public static boolean running_cart_query = false;
     public static Activity productDetailActivity;
+    public static  boolean fromSearch = false;
 
 
     private ViewPager productImagesViewPager;
@@ -221,6 +223,8 @@ public class ProductDetailActivity extends AppCompatActivity {
 
         productID = getIntent().getStringExtra("PRODUCT_ID");
 
+        Log.i("Checking", productID);
+
         firebaseFirestore.collection("PRODUCTS").document(productID)
                 .get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
@@ -237,6 +241,7 @@ public class ProductDetailActivity extends AppCompatActivity {
                                       for(long x=1;x<(long)documentSnapshot.get("no_of_product_image")+1;x++){
                                           productImages.add(documentSnapshot.get("product_image_"+x).toString());
                                       }
+
                                       ProductImagesAdapter productImagesAdapter = new ProductImagesAdapter(productImages);
                                       productImagesViewPager.setAdapter(productImagesAdapter);
                                       productTitle.setText(documentSnapshot.get("product_title").toString());
@@ -832,6 +837,12 @@ public class ProductDetailActivity extends AppCompatActivity {
             finish();
             return true;
         }else if(id == R.id.main_search_icon){
+            if(fromSearch) {
+                finish();
+            } else {
+                Intent searchIntent = new Intent(this, SearchActivity.class);
+                startActivity(searchIntent);
+            }
             return true;
         }else if(id == R.id.main_cart_icon){
             if(currentUser == null){
@@ -846,6 +857,12 @@ public class ProductDetailActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        fromSearch = false;
     }
 
     @Override

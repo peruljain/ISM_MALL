@@ -20,7 +20,7 @@
     </LinearLayout>
 
     <de.hdodenhof.circleimageview.CircleImageView
-        android:id="@+id/profile_image"
+        android:id="@+id/profile_images"
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:elevation="6dp"
@@ -45,7 +45,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/profile_image">
+        app:layout_constraintTop_toBottomOf="@+id/profile_images">
 
         <TextView
             android:id="@+id/user_name"

@@ -1,5 +1,6 @@
 package learncodeonline.in.mymall.address;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,15 +8,25 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import learncodeonline.in.mymall.DBqueries;
 import learncodeonline.in.mymall.R;
 
+import static android.content.Context.POWER_SERVICE;
 import static learncodeonline.in.mymall.address.DeliveryActivity.SELECT_ADDRESS;
 import static learncodeonline.in.mymall.address.MyAccountFragment.MANAGE_ADDRESS;
 import static learncodeonline.in.mymall.address.MyAddressActivity.refreshItem;
@@ -26,11 +37,15 @@ public class AddressesAdapter extends RecyclerView.Adapter<AddressesAdapter.View
     private int MODE;
     private int preSelectedPosition;
     private boolean refresh = false;
+    private Dialog loadingDialog;
 
-    public AddressesAdapter(List<AdressesModel> adressesModelList, int MODE) {
+    public AddressesAdapter(List<AdressesModel> adressesModelList, int MODE, Dialog loadingDialog) {
+
         this.adressesModelList = adressesModelList;
         this.MODE = MODE;
         preSelectedPosition = DBqueries.selectedAddress;
+        this.loadingDialog = loadingDialog;
+
     }
 
     @NonNull
@@ -133,6 +148,7 @@ public class AddressesAdapter extends RecyclerView.Adapter<AddressesAdapter.View
                             addressIntent.putExtra("INTENT","update_address");
                             addressIntent.putExtra("index",position);
                             itemView.getContext().startActivity(addressIntent);
+                            refresh = false;
                         }
                     });
 
@@ -140,6 +156,78 @@ public class AddressesAdapter extends RecyclerView.Adapter<AddressesAdapter.View
                     @Override
                     public void onClick(View v) {//remove address
 
+                        loadingDialog.show();
+
+                        Map<String, Object> addresses = new HashMap<>();
+                        int x = 0;
+                        int selected = -1;
+                        for(int i=0; i<adressesModelList.size(); i++) {
+                            if(i!=position) {
+                                                x++;
+                                                addresses.put("city_"+x, adressesModelList.get(i).getCity());
+                                                addresses.put("locality_"+x, adressesModelList.get(i).getLocality());
+                                                addresses.put("flat_no_"+x,adressesModelList.get(i).getFlatNo());
+                                                addresses.put("pincode_"+x,adressesModelList.get(i).getPincode());
+                                                addresses.put("landmark_"+x,adressesModelList.get(i).getPincode());
+                                                addresses.put("name_"+x, adressesModelList.get(i).getName());
+                                                addresses.put("mobile_no_"+x,adressesModelList.get(i).getMobileNo());
+                                                addresses.put("alternate_mobile_no_"+x,adressesModelList.get(i).getAlternateMobileNo());
+                                                addresses.put("state_"+x,adressesModelList.get(i).getState());
+
+                                                if(adressesModelList.get(position).getSelected()) {
+                                                    if(position-1>=0) {
+                                                        if(x == position) {
+                                                            addresses.put("selected_"+x, true);
+                                                            selected = x;
+                                                        }
+                                                        else {
+                                                            addresses.put("selected_"+x, adressesModelList.get(position).getSelected());
+                                                        }
+                                                    } else {
+                                                            if(x==1) {
+                                                                addresses.put("selected_"+x, true);
+                                                                selected = x;
+                                                            } else {
+                                                                addresses.put("selected_"+x, adressesModelList.get(position).getSelected());
+                                                            }
+                                                    }
+                                                }
+                                                else {
+                                                    addresses.put("selected_"+x, adressesModelList.get(position).getSelected());
+                                                    if(adressesModelList.get(position).getSelected()) {
+                                                        selected = x;
+                                                    }
+                                                }
+
+
+                            }
+                        }
+
+                        addresses.put("list_size", x);
+                        final int finalSelected = x;
+                        FirebaseFirestore.getInstance().collection("USERS").document(FirebaseAuth.getInstance().getUid()).collection("USER_DATA").document("MY_ADDRESSES")
+                                .set(addresses).addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                if(task.isSuccessful()) {
+                                    DBqueries.adressesModelList.remove(position);
+                                    if(finalSelected!=-1) {
+                                        DBqueries.selectedAddress = finalSelected-1;
+                                        DBqueries.adressesModelList.get(finalSelected-1).setSelected(true);
+                                    } else if(DBqueries.adressesModelList.size()==0) {
+                                        DBqueries.selectedAddress = -1;
+                                    }
+                                    notifyDataSetChanged();
+                                }
+                                else {
+                                    String error = task.getException().getMessage();
+                                    Toast.makeText(itemView.getContext(), error, Toast.LENGTH_SHORT).show();
+                                }
+                                loadingDialog.dismiss();
+                            }
+                        });
+
+                        refresh = false;
                     }
                 });
 

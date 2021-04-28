@@ -157,7 +157,16 @@ public class AddAddressActivity extends AppCompatActivity {
 
                                         if(!updateAddress) {
                                             addAddress.put("list_size", (long) position+ 1);
-                                            addAddress.put("selected_" + String.valueOf((long) position + 1), true);
+                                            if(getIntent().getStringExtra("INTENT").equals("manage")) {
+                                                if(DBqueries.adressesModelList.size()==0) {
+                                                    addAddress.put("selected_" + String.valueOf((long) position + 1), true);
+                                                }else {
+                                                    addAddress.put("selected_" + String.valueOf((long) position + 1), false);
+                                                }
+                                            } else {
+                                                addAddress.put("selected_" + String.valueOf((long) position + 1), true);
+                                            }
+
 
                                             if(DBqueries.adressesModelList.size()>0) {
                                                 addAddress.put("selected_" + (DBqueries.selectedAddress + 1), false);
@@ -177,6 +186,15 @@ public class AddAddressActivity extends AppCompatActivity {
                                                             DBqueries.adressesModelList.get(DBqueries.selectedAddress).setSelected(false);
                                                         }
                                                         DBqueries.adressesModelList.add(new AdressesModel(true, city.getText().toString(), locality.getText().toString(), flatNo.getText().toString(), pincode.getText().toString(), landmark.getText().toString(),name.getText().toString(), mobileNo.getText().toString(), alternateMobileNo.getText().toString(), selectedState));
+
+                                                        if(getIntent().getStringExtra("INTENT").equals("manage")) {
+                                                            if(DBqueries.adressesModelList.size()==0) {
+                                                                DBqueries.selectedAddress = DBqueries.adressesModelList.size() - 1;
+                                                            }
+                                                        } else {
+                                                            DBqueries.selectedAddress = DBqueries.adressesModelList.size() - 1;
+                                                        }
+
                                                         DBqueries.selectedAddress = DBqueries.adressesModelList.size() - 1;
                                                     }
                                                     else {

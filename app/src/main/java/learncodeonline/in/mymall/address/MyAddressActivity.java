@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SimpleItemAnimator;
 
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -43,6 +44,8 @@ public class MyAddressActivity extends AppCompatActivity {
     private RecyclerView myaddressesRecyclerView;
     private static AddressesAdapter addressesAdapter;
     private Dialog loadingDialog;
+
+
     private int mode;
 
 
@@ -62,6 +65,14 @@ public class MyAddressActivity extends AppCompatActivity {
         loadingDialog.setCancelable(false);
         loadingDialog.getWindow().setBackgroundDrawable(this.getDrawable(R.drawable.slider_background));
         loadingDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        loadingDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                addressesSaved.setText(String.valueOf(adressesModelList.size())+" saved addresses");
+
+
+            }
+        });
         /////// loading dialog
 
 
@@ -112,7 +123,7 @@ public class MyAddressActivity extends AppCompatActivity {
                 }
             }
         });
-        addressesAdapter = new AddressesAdapter(adressesModelList,mode);
+        addressesAdapter = new AddressesAdapter(adressesModelList,mode, loadingDialog);
         ((SimpleItemAnimator)myaddressesRecyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
         myaddressesRecyclerView.setAdapter(addressesAdapter);
         addressesAdapter.notifyDataSetChanged();
@@ -121,7 +132,11 @@ public class MyAddressActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent addressIntent = new Intent(MyAddressActivity.this,AddAddressActivity.class);
-                addressIntent.putExtra("INTENT","null");
+                if(mode!=SELECT_ADDRESS) {
+                    addressIntent.putExtra("INTENT","manage");
+                } else {
+                    addressIntent.putExtra("INTENT","null");
+                }
                 startActivity(addressIntent);
             }
         });

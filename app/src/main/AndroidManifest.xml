@@ -11,12 +11,15 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/mall_icon"
+        android:icon="@mipmap/ism"
         android:label="MY COLLEGE MALL"
-        android:roundIcon="@mipmap/mall_icon"
+        android:roundIcon="@mipmap/ism"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".OTPverificationActivity"></activity>
+        <activity android:name=".notification.NotificationActivity"></activity>
+        <activity android:name=".SearchActivity" />
+        <activity android:name=".address.UpdateUserInfoActivity" />
+        <activity android:name=".OTPverificationActivity" />
         <activity android:name=".home.ViewAllActivity" />
         <activity android:name=".address.MyAddressActivity" />
         <activity

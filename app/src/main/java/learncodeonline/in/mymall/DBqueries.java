@@ -20,7 +20,10 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -43,6 +46,8 @@ import learncodeonline.in.mymall.home.HomePageAdapter;
 import learncodeonline.in.mymall.home.HomePageModel;
 import learncodeonline.in.mymall.home.HorizontalProductScrollModel;
 import learncodeonline.in.mymall.home.SliderModel;
+import learncodeonline.in.mymall.notification.NotificationActivity;
+import learncodeonline.in.mymall.notification.NotificationModel;
 import learncodeonline.in.mymall.order.MyOrderAdapter;
 import learncodeonline.in.mymall.order.MyOrderItemModel;
 import learncodeonline.in.mymall.order.MyOrdersFragment;
@@ -53,6 +58,7 @@ import learncodeonline.in.mymall.wishlist.MyWishlistFragment;
 import learncodeonline.in.mymall.wishlist.WishlistModel;
 
 import static learncodeonline.in.mymall.product.ProductDetailActivity.productID;
+
 
 
 public class DBqueries {
@@ -76,12 +82,16 @@ public class DBqueries {
     public static List<String> cartList = new ArrayList<>();
     public static List<CartItemModel> cartItemModelList = new ArrayList<>();
 
+    private static ListenerRegistration listenerRegistration;
+
     public static int selectedAddress = -1;
     public static List<AdressesModel> adressesModelList = new ArrayList<>();
 
     public static List<RewardModel> rewardModelList = new ArrayList<>();
 
     public static List<MyOrderItemModel> myOrderItemModelList = new ArrayList<>();
+
+    public static List<NotificationModel> notificationModelList = new ArrayList<>();
 
     public static void loadCategories(final RecyclerView categoryRecyclerView, final CategoryAdapter categoryAdapter, final Context context){
 
@@ -111,8 +121,19 @@ public class DBqueries {
 
     public static void loadFragmentData(final RecyclerView homePageRecyclerView, final Context context, final int index, String categoryNames){
 
+        String temp = categoryNames;
+
+        if(categoryNames.equals("Grocery"))  {
+            temp = categoryNames;
+        }
+        else if(categoryNames.equals("Covid")) {
+            temp = categoryNames;
+        } else {
+            temp = categoryNames.toUpperCase();
+        }
+
         firebaseFirestore.collection("CATEGORIES")
-                .document(categoryNames.toUpperCase())
+                .document(temp)
                 .collection("TOP_DEALS").orderBy("index").get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
@@ -698,4 +719,53 @@ public class DBqueries {
         rewardModelList.clear();
         myOrderItemModelList.clear();
     }
+
+    public static void checkNotifications(boolean remove, @Nullable final TextView notifyCount) {
+
+        if(remove) {
+            listenerRegistration.remove();
+        } else {
+
+            listenerRegistration = firebaseFirestore.collection("USERS").document(FirebaseAuth.getInstance().getUid()).collection("USER_DATA").document("MY_NOTIFICATIONS")
+                    .addSnapshotListener(new EventListener<DocumentSnapshot>() {
+                        @Override
+                        public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
+                            if(documentSnapshot != null && documentSnapshot.exists()) {
+                                notificationModelList.clear();
+                                int unread = 0;
+                                for(long x = 0; x < (long) documentSnapshot.get("list_size"); x++) {
+                                    notificationModelList.add(0, new NotificationModel(documentSnapshot.get("Image_"+x).toString(),
+                                            documentSnapshot.get("Body_"+x).toString(),documentSnapshot.getBoolean("Readed_"+x)));
+
+
+                                    if(!documentSnapshot.getBoolean("Readed_"+x)) {
+                                        unread++;
+                                        if(notifyCount!=null) {
+                                            if(unread > 0) {
+                                                notifyCount.setVisibility(View.VISIBLE);
+                                                if (unread < 99) {
+                                                    notifyCount.setText(String.valueOf(unread));
+                                                } else {
+                                                    notifyCount.setText("99");
+                                                }
+                                            } else {
+                                                notifyCount.setVisibility(View.INVISIBLE);
+                                            }
+                                        }
+                                    }
+
+                                }
+
+                                if(NotificationActivity.adapter!=null) {
+                                    NotificationActivity.adapter.notifyDataSetChanged();
+                                }
+
+                            }
+                        }
+                    });
+
+        }
+
+    }
+
 }

@@ -1,5 +1,7 @@
 package learncodeonline.in.mymall.wishlist;
 
+import java.util.ArrayList;
+
 public class WishlistModel {
     private String productId;
     private String productImage;
@@ -11,6 +13,15 @@ public class WishlistModel {
     private String cuttedPrice;
     private boolean COD;
     private boolean inStock;
+    private ArrayList<String> tags;
+
+    public ArrayList<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(ArrayList<String> tags) {
+        this.tags = tags;
+    }
 
     public WishlistModel(String productId, String productImage, String productTitle, long freecoupons, String rating, long totalRating, String productPrice, String cuttedPrice, boolean COD, boolean inStock) {
         this.productId = productId;

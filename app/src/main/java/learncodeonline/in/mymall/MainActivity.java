@@ -44,6 +44,7 @@ import learncodeonline.in.mymall.authentication.SignInFragment;
 import learncodeonline.in.mymall.authentication.SignUpFragment;
 import learncodeonline.in.mymall.cart.MyCartFragment;
 import learncodeonline.in.mymall.home.HomeFragment;
+import learncodeonline.in.mymall.notification.NotificationActivity;
 import learncodeonline.in.mymall.order.MyOrdersFragment;
 import learncodeonline.in.mymall.reward.MyRewardsFragment;
 import learncodeonline.in.mymall.wishlist.MyWishlistFragment;
@@ -166,32 +167,47 @@ public class MainActivity extends AppCompatActivity implements
         if (currentUser == null) {
             navigationView.getMenu().getItem(navigationView.getMenu().size() - 1).setEnabled(false);
         } else {
-            FirebaseFirestore.getInstance().collection("USERS").document(currentUser.getUid())
-                    .get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                @Override
-                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                    if (task.isSuccessful()) {
-                        DBqueries.fullname = task.getResult().getString("fullname");
-                        DBqueries.email = task.getResult().getString("email");
-                        DBqueries.profile = task.getResult().getString("profile");
 
-                        fullname.setText(DBqueries.fullname);
-                        email.setText(DBqueries.email);
 
-                        if(DBqueries.profile.equals("")) {
-                            addProfileIcon.setVisibility(View.VISIBLE);
+
+            if(DBqueries.email == null) {
+                FirebaseFirestore.getInstance().collection("USERS").document(currentUser.getUid())
+                        .get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                        if (task.isSuccessful()) {
+                            DBqueries.fullname = task.getResult().getString("fullname");
+                            DBqueries.email = task.getResult().getString("email");
+                            DBqueries.profile = task.getResult().getString("profile");
+
+                            fullname.setText(DBqueries.fullname);
+                            email.setText(DBqueries.email);
+
+                            if (DBqueries.profile.equals("")) {
+                                addProfileIcon.setVisibility(View.VISIBLE);
+                            } else {
+                                Glide.with(MainActivity.this).load(DBqueries.profile).apply(new RequestOptions().placeholder(R.mipmap.account)).into(profileView);
+                            }
+
+                        } else {
+                            String error = task.getException().getMessage();
+                            Toast.makeText(MainActivity.this, error, Toast.LENGTH_SHORT).show();
                         }
-                        else {
-                            Glide.with(MainActivity.this).load(DBqueries.profile).apply(new RequestOptions().placeholder(R.mipmap.account)).into(profileView);
-                        }
-
-                    } else {
-                        String error = task.getException().getMessage();
-                        Toast.makeText(MainActivity.this, error, Toast.LENGTH_SHORT).show();
                     }
+                });
+            } else {
+                fullname.setText(DBqueries.fullname);
+                email.setText(DBqueries.email);
+
+                if (DBqueries.profile.equals("")) {
+                    profileView.setImageResource(R.mipmap.account);
+                    addProfileIcon.setVisibility(View.VISIBLE);
+                } else {
+                    Glide.with(MainActivity.this).load(DBqueries.profile).apply(new RequestOptions().placeholder(R.mipmap.account)).into(profileView);
                 }
-            });
+            }
             navigationView.getMenu().getItem(navigationView.getMenu().size() - 1).setEnabled(true);
+
         }
         if (resetMainactivity) {
             resetMainactivity = false;
@@ -200,6 +216,12 @@ public class MainActivity extends AppCompatActivity implements
             navigationView.getMenu().getItem(0).setChecked(true);
         }
         invalidateOptionsMenu();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        DBqueries.checkNotifications(true, null);
     }
 
     @Override
@@ -263,6 +285,25 @@ public class MainActivity extends AppCompatActivity implements
                 }
             });
 
+            MenuItem notifyItem = menu.findItem(R.id.main_notification_icon);
+            notifyItem.setActionView(R.layout.badge_layout);
+            ImageView notifyIcon = notifyItem.getActionView().findViewById(R.id.badge_icon);
+            notifyIcon.setImageResource(R.mipmap.notification_icon);
+           TextView notifyCount = notifyItem.getActionView().findViewById(R.id.badge_count);
+
+           if(currentUser!=null) {
+               DBqueries.checkNotifications(false, notifyCount);
+           }
+
+            notifyItem.getActionView().setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent notificationIntent = new Intent(MainActivity.this, NotificationActivity.class);
+                    startActivity(notificationIntent);
+                }
+            });
+
+
         }
         return true;
     }
@@ -287,8 +328,12 @@ public class MainActivity extends AppCompatActivity implements
         int id = item.getItemId();
 
         if (id == R.id.main_search_icon) {
+            Intent searchIntent = new Intent(this, SearchActivity.class);
+            startActivity(searchIntent);
             return true;
         } else if (id == R.id.main_notification_icon) {
+            Intent notificationIntent = new Intent(this, NotificationActivity.class);
+            startActivity(notificationIntent);
             return true;
         } else if (id == R.id.main_cart_icon) {
 
@@ -314,7 +359,7 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        final DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         menuItem = item;
 
@@ -348,6 +393,7 @@ public class MainActivity extends AppCompatActivity implements
                         startActivity(registerIntent);
                         finish();
                     }
+                    drawer.removeDrawerListener(this);
                 }
             });
 
